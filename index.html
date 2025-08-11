@@ -4,61 +4,60 @@
     <title>Games</title>
     <style>
         body { font-family: sans-serif; }
-        #game-list { list-style: none; padding: 0; }
-        #game-list li { margin: 5px 0; }
-        #game-list a { text-decoration: none; color: blue; }
-        #game-list a:hover { text-decoration: underline; }
+        #game-selector { padding: 5px; }
         #game-container { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
     <h1>Select a Game</h1>
-    <ul id="game-list">
-        <li><a href="#" data-game="board_game.html">Board Game</a></li>
-        <li><a href="#" data-game="game_battlefield.html">Battlefield</a></li>
-        <li><a href="#" data-game="game_bingo.html">Bingo</a></li>
-        <li><a href="#" data-game="game_checkers.html">Checkers</a></li>
-        <li><a href="#" data-game="game_crosswords.html">Crosswords</a></li>
-        <li><a href="#" data-game="game_game_of_life_v2.html">Game of Life v2</a></li>
-        <li><a href="#" data-game="game_game_of_life_v3.html">Game of Life v3</a></li>
-        <li><a href="#" data-game="game_game_of_life.html">Game of Life</a></li>
-        <li><a href="#" data-game="game_generic_csv.html">Generic CSV Game</a></li>
-        <li><a href="#" data-game="game_kumon_v2.html">Kumon v2</a></li>
-        <li><a href="#" data-game="game_kumon.html">Kumon</a></li>
-        <li><a href="#" data-game="game_map_africa.html">Map of Africa</a></li>
-        <li><a href="#" data-game="game_map_asia.html">Map of Asia</a></li>
-        <li><a href="#" data-game="game_memorycard.html">Memory Card</a></li>
-        <li><a href="#" data-game="game_of_animals.html">Game of Animals</a></li>
-        <li><a href="#" data-game="game_of_flags_capitals.html">Flags and Capitals</a></li>
-        <li><a href="#" data-game="game_of_flags.html">Game of Flags</a></li>
-        <li><a href="#" data-game="game_pacman_v0.html">Pacman v0</a></li>
-        <li><a href="#" data-game="game_pense_bem.html">Pense Bem</a></li>
-        <li><a href="#" data-game="game_quiz.html">Quiz</a></li>
-        <li><a href="#" data-game="game_river_raid_v2.html">River Raid v2</a></li>
-        <li><a href="#" data-game="game_river_raid.html">River Raid</a></li>
-        <li><a href="#" data-game="game_simon.html">Simon</a></li>
-        <li><a href="#" data-game="game_sliding_block.html">Sliding Block</a></li>
-        <li><a href="#" data-game="game_tap.html">Tap Game</a></li>
-        <li><a href="#" data-game="game_tetris.html">Tetris</a></li>
-        <li><a href="#" data-game="game_tictactoe.html">Tic Tac Toe</a></li>
-        <li><a href="#" data-game="game_uno.html">Uno</a></li>
-        <li><a href="#" data-game="game_whac_a_croc.html">Whac-a-Croc</a></li>
-        <li><a href="#" data-game="game_word_formwords.html">Form Words</a></li>
-        <li><a href="#" data-game="game_wordsearchpuzzle.html">Word Search Puzzle</a></li>
-    </ul>
+    <select id="game-selector">
+        <option value="">Select a game...</option>
+        <option value="board_game.html">Board Game</option>
+        <option value="game_battlefield.html">Battlefield</option>
+        <option value="game_bingo.html">Bingo</option>
+        <option value="game_checkers.html">Checkers</option>
+        <option value="game_crosswords.html">Crosswords</option>
+        <option value="game_game_of_life_v2.html">Game of Life v2</option>
+        <option value="game_game_of_life_v3.html">Game of Life v3</option>
+        <option value="game_game_of_life.html">Game of Life</option>
+        <option value="game_generic_csv.html">Generic CSV Game</option>
+        <option value="game_kumon_v2.html">Kumon v2</option>
+        <option value="game_kumon.html">Kumon</option>
+        <option value="game_map_africa.html">Map of Africa</option>
+        <option value="game_map_asia.html">Map of Asia</option>
+        <option value="game_memorycard.html">Memory Card</option>
+        <option value="game_of_animals.html">Game of Animals</option>
+        <option value="game_of_flags_capitals.html">Flags and Capitals</option>
+        <option value="game_of_flags.html">Game of Flags</option>
+        <option value="game_pacman_v0.html">Pacman v0</option>
+        <option value="game_pense_bem.html">Pense Bem</option>
+        <option value="game_quiz.html">Quiz</option>
+        <option value="game_river_raid_v2.html">River Raid v2</option>
+        <option value="game_river_raid.html">River Raid</option>
+        <option value="game_simon.html">Simon</option>
+        <option value="game_sliding_block.html">Sliding Block</option>
+        <option value="game_tap.html">Tap Game</option>
+        <option value="game_tetris.html">Tetris</option>
+        <option value="game_tictactoe.html">Tic Tac Toe</option>
+        <option value="game_uno.html">Uno</option>
+        <option value="game_whac_a_croc.html">Whac-a-Croc</option>
+        <option value="game_word_formwords.html">Form Words</option>
+        <option value="game_wordsearchpuzzle.html">Word Search Puzzle</option>
+    </select>
     <div id="game-container"></div>
 
     <script>
-        document.getElementById('game-list').addEventListener('click', function(event) {
-            event.preventDefault();
-            var gameFile = event.target.getAttribute('data-game');
-            if (gameFile) {
-                fetch('dir/' + gameFile)
-                    .then(response => response.text())
-                    .then(html => {
-                        document.getElementById('game-container').innerHTML = html;
-                    });
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('game-selector').addEventListener('change', function(event) {
+                var gameFile = event.target.value;
+                if (gameFile) {
+                    fetch('dir/' + gameFile)
+                        .then(response => response.text())
+                        .then(html => {
+                            document.getElementById('game-container').innerHTML = html;
+                        });
+                }
+            });
         });
     </script>
 </body>
