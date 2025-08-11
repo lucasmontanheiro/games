@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Board Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            font-size: 2em;
+            margin: 20px;
+        }
+        p {
+            font-size: 1.2em;
+            margin: 10px 20px;
+        }
+        .game-board {
+            margin: 20px auto;
+            position: relative;
+            display: inline-block;
+            width: 90%;
+            max-width: 600px;
+        }
+        .game-board img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .message {
+            margin: 20px auto;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: left;
+            font-size: 1.1em;
+            max-width: 90%;
+            display: none; /* Start hidden */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            p {
+                font-size: 1em;
+            }
+            .message {
+                font-size: 1em;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>The French Revolution Board Game</h1>
+    <p>Click on different parts of the board to trigger events.</p>
+    
+    <!-- Display the board -->
+    <div class="game-board">
+        <img src="https://github.com/lucasmontanheiro/static/blob/main/Leonardo_Phoenix_Design_a_highly_detailed_and_visually_captiva_3.jpg?raw=true" 
+             usemap="#board-map" 
+             alt="French Revolution Board Game" 
+             id="gameImage">
+
+        <map name="board-map" id="board-map">
+            <area alt="Corner Bottom Left" title="Corner Bottom Left" href="#" coords="5,1119,5,840,297,1115,18,1119" shape="poly" data-event="corner_bottom_left">
+            <area alt="Corner Bottom Right" title="Corner Bottom Right" href="#" coords="835,1112,1114,826,1114,1114" shape="poly" data-event="corner_bottom_right">
+        </map>
+    </div>
+
+    <!-- Display the triggered event -->
+    <div id="message" class="message"></div>
+
+    <script>
+        // Define events triggered by area clicks
+        const events = {
+            corner_bottom_left: "Corner Bottom Left Event: You encountered a peasant uprising. Address the grievances of the people!",
+            corner_bottom_right: "Corner Bottom Right Event: A royalist faction is plotting. Strategize your next move!"
+        };
+
+        // Function to handle clicks on map areas
+        document.querySelectorAll('area').forEach(area => {
+            area.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                // Debug: Log the area being clicked
+                console.log("Clicked area: ", this.dataset.event);
+
+                const eventKey = this.dataset.event;
+                const messageBox = document.getElementById('message');
+
+                // Display the event message if it exists
+                if (events[eventKey]) {
+                    messageBox.textContent = events[eventKey];
+                    messageBox.style.display = 'block';
+                } else {
+                    messageBox.textContent = "This area has no event assigned yet.";
+                    messageBox.style.display = 'block';
+                }
+            });
+        });
+
+        // Adjust area coordinates when image resizes
+        function resizeMap() {
+            const image = document.getElementById('gameImage');
+            const originalWidth = 1114; // Replace with the actual width of your original image
+            const originalHeight = 1119; // Replace with the actual height of your original image
+            const map = document.querySelector('#board-map');
+            const areas = map.querySelectorAll('area');
+            const scaleX = image.clientWidth / originalWidth;
+            const scaleY = image.clientHeight / originalHeight;
+
+            areas.forEach(area => {
+                const originalCoords = area.dataset.originalCoords || area.coords;
+                const coords = originalCoords.split(',').map((coord, index) => 
+                    Math.round(index % 2 === 0 ? coord * scaleX : coord * scaleY)
+                );
+                area.coords = coords.join(',');
+                if (!area.dataset.originalCoords) {
+                    area.dataset.originalCoords = originalCoords;
+                }
+            });
+        }
+
+        // Trigger resize on window load and resize
+        window.onload = resizeMap;
+        window.onresize = resizeMap;
+    </script>
+</body>
+</html>

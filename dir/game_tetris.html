@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Responsive Tetris game with score tracking and keyboard controls, designed for mobile-first usage.">
+  <title>Responsive Tetris Game</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* General Game Styles */
+    body {
+      background-color: #222;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+    }
+    .game-container {
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .game-grid {
+      display: grid;
+      grid-template-rows: repeat(20, 30px);
+      grid-template-columns: repeat(10, 30px);
+      gap: 1px;
+      background-color: #333;
+      border: 2px solid #666;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      background-color: #444;
+    }
+    .cell.active {
+      background-color: #f39c12;
+    }
+    .score-board {
+      margin: 10px 0;
+    }
+    .btn-reset {
+      margin-top: 10px;
+    }
+    @media (max-width: 576px) {
+      .game-grid {
+        grid-template-rows: repeat(20, 20px);
+        grid-template-columns: repeat(10, 20px);
+      }
+      .cell {
+        width: 20px;
+        height: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container game-container">
+    <h1 class="my-3">Responsive Tetris Game</h1>
+    <p>Control the Tetris blocks using the arrow keys: <kbd>↑</kbd> to rotate, <kbd>←</kbd>/<kbd>→</kbd> to move, and <kbd>↓</kbd> to accelerate.</p>
+    <div class="score-board">
+      <h2>Score: <span id="score">0</span></h2>
+    </div>
+    <div class="game-grid" id="gameGrid"></div>
+    <button class="btn btn-warning btn-reset" id="resetBtn">Reset Game</button>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Constants
+    const ROWS = 20;
+    const COLUMNS = 10;
+    const INITIAL_SPEED = 500;
+
+    // Game State
+    let gameGrid = [];
+    let activePiece = null;
+    let gameInterval = null;
+    let score = 0;
+
+    /**
+     * Initialize the game grid.
+     */
+    function initializeGrid() {
+      const gridContainer = document.getElementById("gameGrid");
+      gridContainer.innerHTML = ""; // Clear previous grid
+      gameGrid = [];
+      for (let row = 0; row < ROWS; row++) {
+        const rowArray = [];
+        for (let col = 0; col < COLUMNS; col++) {
+          const cell = document.createElement("div");
+          cell.classList.add("cell");
+          gridContainer.appendChild(cell);
+          rowArray.push(0); // Empty cell
+        }
+        gameGrid.push(rowArray);
+      }
+    }
+
+    /**
+     * Spawn a new Tetris piece.
+     */
+    function spawnPiece() {
+      activePiece = {
+        shape: [[1, 1, 1], [0, 1, 0]],
+        row: 0,
+        col: Math.floor(COLUMNS / 2) - 1,
+      };
+    }
+
+    /**
+     * Draw the current grid and active piece.
+     */
+    function drawGrid() {
+      const cells = document.querySelectorAll(".cell");
+      cells.forEach((cell, index) => {
+        const row = Math.floor(index / COLUMNS);
+        const col = index % COLUMNS;
+        cell.classList.remove("active");
+        if (gameGrid[row][col] === 1) {
+          cell.classList.add("active");
+        }
+      });
+
+      // Draw the active piece
+      activePiece.shape.forEach((row, rIndex) => {
+        row.forEach((value, cIndex) => {
+          if (value === 1) {
+            const r = activePiece.row + rIndex;
+            const c = activePiece.col + cIndex;
+            if (r >= 0 && c >= 0 && r < ROWS && c < COLUMNS) {
+              const cellIndex = r * COLUMNS + c;
+              cells[cellIndex].classList.add("active");
+            }
+          }
+        });
+      });
+    }
+
+    /**
+     * Move the active piece in a direction.
+     * @param {string} direction - 'left', 'right', or 'down'.
+     */
+    function movePiece(direction) {
+      if (!activePiece) return;
+      switch (direction) {
+        case "left":
+          activePiece.col--;
+          break;
+        case "right":
+          activePiece.col++;
+          break;
+        case "down":
+          activePiece.row++;
+          break;
+      }
+      drawGrid();
+    }
+
+    /**
+     * Rotate the active piece.
+     */
+    function rotatePiece() {
+      const newShape = activePiece.shape[0].map((_, index) =>
+        activePiece.shape.map(row => row[index]).reverse()
+      );
+      activePiece.shape = newShape;
+      drawGrid();
+    }
+
+    /**
+     * Handle keyboard input for controls.
+     * @param {KeyboardEvent} event
+     */
+    function handleControls(event) {
+      switch (event.key) {
+        case "ArrowLeft":
+          movePiece("left");
+          break;
+        case "ArrowRight":
+          movePiece("right");
+          break;
+        case "ArrowDown":
+          movePiece("down");
+          break;
+        case "ArrowUp":
+          rotatePiece();
+          break;
+      }
+    }
+
+    /**
+     * Start the game loop.
+     */
+    function startGame() {
+      spawnPiece();
+      drawGrid();
+      gameInterval = setInterval(() => {
+        movePiece("down");
+      }, INITIAL_SPEED);
+    }
+
+    /**
+     * Reset the game.
+     */
+    function resetGame() {
+      clearInterval(gameInterval);
+      score = 0;
+      document.getElementById("score").innerText = score;
+      initializeGrid();
+      startGame();
+    }
+
+    // Event Listeners
+    document.addEventListener("keydown", handleControls);
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+
+    // Initialize and Start Game
+    initializeGrid();
+    startGame();
+  </script>
+</body>
+</html>

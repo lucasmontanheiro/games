@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Africa Map Game</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        /* Custom styles for responsiveness and layout */
+        #map-container {
+            width: 100%;
+            max-width: 700px;
+            margin: 20px auto;
+        }
+        .game-instructions {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center mt-4">Africa Map Game</h1>
+    <p class="game-instructions">Click on the correct country on the map as prompted below.</p>
+    <div id="map-container">
+        <div id="geochart-colors" style="width: 100%; height: 433px;"></div>
+    </div>
+    <div class="text-center">
+        <p id="question" class="fs-4 fw-bold"></p>
+        <p id="feedback" class="fs-5"></p>
+    </div>
+</div>
+<script>
+    // Load Google GeoChart
+    google.charts.load('current', {
+        'packages': ['geochart'],
+        'mapsApiKey': '' // Insert your Maps API key here
+    });
+    google.charts.setOnLoadCallback(drawRegionsMap);
+
+    let targetCountry = ""; // Country user must find
+
+    // List of African countries for game questions
+    const africanCountries = [
+        'Algeria', 'Angola', 'Benin', 'Botswana', 'Burkina Faso', 'Burundi',
+        'Cameroon', 'Cape Verde', 'Central African Republic', 'Chad', 'Comoros',
+        'Cote d\'Ivoire', 'Democratic Republic of the Congo', 'Djibouti',
+        'Egypt', 'Equatorial Guinea', 'Eritrea', 'Ethiopia', 'Gabon', 'Gambia',
+        'Ghana', 'Guinea', 'Guinea-Bissau', 'Kenya', 'Lesotho', 'Liberia',
+        'Libya', 'Madagascar', 'Malawi', 'Mali', 'Mauritania', 'Mauritius',
+        'Morocco', 'Mozambique', 'Namibia', 'Niger', 'Nigeria',
+        'Republic of the Congo', 'Rwanda', 'Senegal', 'Seychelles',
+        'Sierra Leone', 'Somalia', 'South Africa', 'South Sudan', 'Sudan',
+        'Swaziland', 'Tanzania', 'Togo', 'Tunisia', 'Uganda', 'Zambia', 'Zimbabwe'
+    ];
+
+    function drawRegionsMap() {
+        const data = google.visualization.arrayToDataTable([
+            ['Country', 'Latitude'],
+            ['Algeria', 36], ['Angola', -8], ['Benin', 6], ['Botswana', -24],
+            ['Burkina Faso', 12], ['Burundi', -3], ['Cameroon', 3],
+            ['Cape Verde', 15], ['Central African Republic', 4], ['Chad', 12],
+            ['Comoros', -12], ['Cote d\'Ivoire', 6],
+            ['Democratic Republic of the Congo', -3], ['Djibouti', 12],
+            ['Egypt', 26], ['Equatorial Guinea', 3], ['Eritrea', 15],
+            ['Ethiopia', 9], ['Gabon', 0], ['Gambia', 13], ['Ghana', 5],
+            ['Guinea', 10], ['Guinea-Bissau', 12], ['Kenya', -1],
+            ['Lesotho', -29], ['Liberia', 6], ['Libya', 32], ['Madagascar', null],
+            ['Malawi', -14], ['Mali', 12], ['Mauritania', 18], ['Mauritius', -20],
+            ['Morocco', 32], ['Mozambique', -25], ['Namibia', -22],
+            ['Niger', 14], ['Nigeria', 8], ['Republic of the Congo', -1],
+            ['Rwanda', -2], ['Senegal', 15], ['Seychelles', -5],
+            ['Sierra Leone', 8], ['Somalia', 2], ['South Africa', -30],
+            ['South Sudan', 5], ['Sudan', 15], ['Swaziland', -26],
+            ['Tanzania', -6], ['Togo', 6], ['Tunisia', 34], ['Uganda', 1],
+            ['Zambia', -15], ['Zimbabwe', -18]
+        ]);
+
+        const options = {
+            region: '002', // Africa
+            colorAxis: {colors: ['#00853f', 'black', '#e31b23']},
+            backgroundColor: '#81d4fa',
+            datalessRegionColor: '#f8bbd0',
+            defaultColor: '#f5f5f5',
+            tooltip: { trigger: 'none' } // Disable tooltips to hide hover information
+        };
+
+        const chart = new google.visualization.GeoChart(document.getElementById('geochart-colors'));
+
+        // Event listener to capture user clicks
+        google.visualization.events.addListener(chart, 'select', function () {
+            const selection = chart.getSelection();
+            if (selection.length > 0) {
+                const selectedCountry = data.getValue(selection[0].row, 0);
+                document.getElementById('feedback').innerText = `You clicked on: ${selectedCountry}`;
+
+                if (selectedCountry === targetCountry) {
+                    document.getElementById('feedback').innerText += "\nCorrect! Well done.";
+                    setTimeout(startGame, 2000);
+                } else {
+                    document.getElementById('feedback').innerText += "\nWrong! Try again.";
+                }
+            }
+        });
+
+        chart.draw(data, options);
+    }
+
+    // Start the game by selecting a random country
+    function startGame() {
+        targetCountry = africanCountries[Math.floor(Math.random() * africanCountries.length)];
+        document.getElementById('question').innerText = `Find this country: ${targetCountry}`;
+        document.getElementById('feedback').innerText = "";
+        drawRegionsMap();
+    }
+
+    // Initialize the game on page load
+    window.onload = startGame;
+</script>
+</body>
+</html>

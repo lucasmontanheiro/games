@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game of Life Board Game - Responsive Timeline</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .timeline {
+      position: relative;
+      padding: 0;
+      margin: 20px auto;
+      list-style: none;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #dee2e6;
+      transform: translateX(-50%);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+      padding: 10px 20px;
+      width: 100%;
+    }
+
+    .timeline-item .timeline-marker {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #0d6efd;
+    }
+
+    .timeline-item .timeline-content {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      font-size: 14px;
+      padding: 10px;
+    }
+
+    .timeline-item .player-pin {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin: 0 5px;
+      vertical-align: middle;
+    }
+
+    .player-1 {
+      background-color: red;
+    }
+
+    .player-2 {
+      background-color: blue;
+    }
+
+    .player-3 {
+      background-color: green;
+    }
+
+    .player-4 {
+      background-color: yellow;
+    }
+
+    @media (min-width: 768px) {
+      .timeline-item {
+        width: calc(50% - 40px);
+      }
+
+      .timeline-item:nth-child(odd) {
+        float: left;
+        text-align: right;
+      }
+
+      .timeline-item:nth-child(even) {
+        float: right;
+        text-align: left;
+      }
+
+      .timeline-item:nth-child(odd) .timeline-content {
+        margin-right: 60px;
+      }
+
+      .timeline-item:nth-child(even) .timeline-content {
+        margin-left: 60px;
+      }
+    }
+
+    .log {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .scorecard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px auto;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 10px;
+    }
+
+    .score {
+      padding: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container text-center">
+    <h1>Game of Life Board Game</h1>
+
+    <!-- Scorecard -->
+    <div id="scorecard" class="scorecard"></div>
+
+    <!-- Status and Dice -->
+    <div class="status">
+      <h4>Current Player: <span id="currentPlayer">Player 1</span></h4>
+      <button id="rollDice" class="btn btn-primary mt-2">Roll Dice</button>
+      <p class="mt-3">Dice Result: <span id="diceResult">-</span></p>
+    </div>
+
+    <!-- Game Log -->
+    <div class="log mt-3">
+      <h5>Game Log</h5>
+      <ul id="gameLog" class="list-unstyled"></ul>
+    </div>
+
+    <!-- Timeline -->
+    <ul class="timeline" id="timeline"></ul>
+
+    <!-- Reset Button -->
+    <div class="controls mt-4">
+      <button id="resetGame" class="btn btn-warning">Reset Game</button>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const totalSteps = 40;
+
+    // Players
+    let players = [
+      { id: 1, position: 0, points: 0, color: "player-1" },
+      { id: 2, position: 0, points: 0, color: "player-2" }
+    ];
+    let currentPlayerIndex = 0;
+
+    // Special Events
+    const events = {
+      5: { message: "You found a treasure! Gain 10 points.", points: 10 },
+      12: { message: "You went to a party! Gain 5 points.", points: 5 },
+      18: { message: "You got caught speeding. Lose 5 points.", points: -5 },
+      25: { message: "You went to jail. Lose 1 point.", points: -1 },
+      40: { message: "You helped a friend! Gain 8 points.", points: 8 }
+    };
+
+    // DOM Elements
+    const diceResult = document.getElementById("diceResult");
+    const currentPlayerDisplay = document.getElementById("currentPlayer");
+    const gameLog = document.getElementById("gameLog");
+    const scorecard = document.getElementById("scorecard");
+    const timeline = document.getElementById("timeline");
+
+    // Initialize the timeline
+    function createTimeline() {
+      timeline.innerHTML = "";
+      for (let i = 1; i <= totalSteps; i++) {
+        const item = document.createElement("li");
+        item.classList.add("timeline-item");
+        if (events[i]) {
+          item.classList.add("active");
+        }
+        item.innerHTML = `
+          <span class="timeline-marker"></span>
+          <div class="timeline-content" id="step-${i}">
+            Step ${i} ${events[i] ? `<br><small>${events[i].message}</small>` : ""}
+          </div>`;
+        timeline.appendChild(item);
+      }
+      updateTimelinePins();
+    }
+
+    // Update players' positions on the timeline
+    function updateTimelinePins() {
+      document.querySelectorAll(".timeline-content").forEach((content) => {
+        content.innerHTML = content.innerHTML.replace(/<div class="player-pin.*?<\/div>/g, ""); // Clear existing pins
+      });
+
+      players.forEach((player) => {
+        const stepContent = document.getElementById(`step-${player.position}`);
+        if (stepContent) {
+          const pin = document.createElement("div");
+          pin.classList.add("player-pin", player.color);
+          stepContent.appendChild(pin);
+        }
+      });
+    }
+
+    // Update Scorecard
+    function updateScorecard() {
+      scorecard.innerHTML = "";
+      players.forEach((player) => {
+        const scoreDiv = document.createElement("div");
+        scoreDiv.classList.add("score");
+        scoreDiv.innerHTML = `<span style="color: ${player.color.replace('player-', '')};">Player ${player.id}</span>: ${player.points} Points`;
+        scorecard.appendChild(scoreDiv);
+      });
+    }
+
+    // Roll Dice
+    document.getElementById("rollDice").addEventListener("click", () => {
+      const roll = Math.floor(Math.random() * 6) + 1; // Dice roll: 1-6
+      diceResult.textContent = roll;
+
+      const player = players[currentPlayerIndex];
+      player.position += roll;
+
+      if (player.position >= totalSteps) {
+        player.position = totalSteps;
+        logMessage(`Player ${player.id} has won the game! 🎉`);
+        document.getElementById("rollDice").disabled = true;
+        updateScorecard();
+        updateTimelinePins();
+        return;
+      }
+
+      // Check for events
+      if (events[player.position]) {
+        const event = events[player.position];
+        logMessage(`Player ${player.id} landed on step ${player.position}: ${event.message}`);
+        player.points += event.points;
+      } else {
+        logMessage(`Player ${player.id} moved to step ${player.position}.`);
+      }
+
+      // Update for the next player
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      currentPlayerDisplay.textContent = `Player ${players[currentPlayerIndex].id}`;
+      updateScorecard();
+      updateTimelinePins();
+    });
+
+    // Reset Game
+    document.getElementById("resetGame").addEventListener("click", () => {
+      players = players.map((player) => ({ ...player, position: 0, points: 0 }));
+      currentPlayerIndex = 0;
+      currentPlayerDisplay.textContent = "Player 1";
+      diceResult.textContent = "-";
+      document.getElementById("rollDice").disabled = false;
+      gameLog.innerHTML = "";
+      createTimeline();
+      updateScorecard();
+    });
+
+    // Log messages
+    function logMessage(message) {
+      const li = document.createElement("li");
+      li.textContent = message;
+      gameLog.appendChild(li);
+      gameLog.scrollTop = gameLog.scrollHeight; // Auto-scroll to bottom
+    }
+
+    // Initialize Game
+    createTimeline();
+    updateScorecard();
+  </script>
+</body>
+</html>

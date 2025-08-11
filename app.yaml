@@ -1,0 +1,10 @@
+runtime: php83
+service: games
+
+handlers:
+- url: /dir/
+  static_dir: dir/
+
+# Route all other requests to the main PHP script (router.php)
+- url: /.*
+  script: index.php

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Start Game</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    /* Vtech Smart Start Color Palette */
+    body {
+      background: linear-gradient(135deg, #ffd700, #ff4500);
+      font-family: 'Arial', sans-serif;
+      color: #000;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .game-container {
+      max-width: 400px;
+      width: 100%;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .question {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #ff4500;
+    }
+
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    }
+
+    .option {
+      flex: 1 1 45%;
+      background-color: #ffd700;
+      color: #000;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: transform 0.2s, background-color 0.3s;
+    }
+
+    .option:hover {
+      background-color: #ff4500;
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    .result {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .play-again {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .play-again button {
+      background-color: #ff4500;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .play-again button:hover {
+      background-color: #ffd700;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h1>Smart Start Game</h1>
+    <div id="game">
+      <div class="question" id="question">What is 5 + 3?</div>
+      <div class="options" id="options">
+        <div class="option" data-answer="true">8</div>
+        <div class="option" data-answer="false">9</div>
+        <div class="option" data-answer="false">7</div>
+        <div class="option" data-answer="false">10</div>
+      </div>
+      <div class="result" id="result"></div>
+      <div class="play-again" id="playAgain">
+        <button onclick="startGame()">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { question: "What is 5 + 3?", options: ["8", "9", "7", "10"], correct: "8" },
+      { question: "What is 6 - 2?", options: ["4", "5", "6", "3"], correct: "4" },
+      { question: "What is 3 x 2?", options: ["6", "8", "7", "5"], correct: "6" },
+      { question: "What is 9 ÷ 3?", options: ["3", "4", "2", "5"], correct: "3" }
+    ];
+
+    let currentQuestionIndex = 0;
+
+    function startGame() {
+      currentQuestionIndex = 0;
+      document.getElementById("playAgain").style.display = "none";
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const questionData = questions[currentQuestionIndex];
+      const questionElement = document.getElementById("question");
+      const optionsElement = document.getElementById("options");
+      const resultElement = document.getElementById("result");
+
+      questionElement.textContent = questionData.question;
+      optionsElement.innerHTML = "";
+      resultElement.textContent = "";
+
+      questionData.options.forEach(option => {
+        const optionDiv = document.createElement("div");
+        optionDiv.classList.add("option");
+        optionDiv.textContent = option;
+        optionDiv.setAttribute("data-answer", option === questionData.correct);
+        optionDiv.addEventListener("click", handleOptionClick);
+        optionsElement.appendChild(optionDiv);
+      });
+    }
+
+    function handleOptionClick(event) {
+      const isCorrect = event.target.getAttribute("data-answer") === "true";
+      const resultElement = document.getElementById("result");
+      const playAgainElement = document.getElementById("playAgain");
+
+      if (isCorrect) {
+        resultElement.textContent = "Correct! 🎉";
+        resultElement.style.color = "#008000"; // Green
+      } else {
+        resultElement.textContent = "Wrong! Try Again. 😞";
+        resultElement.style.color = "#ff0000"; // Red
+      }
+
+      setTimeout(() => {
+        if (isCorrect) {
+          currentQuestionIndex++;
+          if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+          } else {
+            resultElement.textContent = "You finished the game! 🎮";
+            playAgainElement.style.display = "block";
+          }
+        } else {
+          loadQuestion();
+        }
+      }, 1000);
+    }
+
+    // Initialize the game on page load
+    startGame();
+  </script>
+</body>
+</html>

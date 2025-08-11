@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Word Search Puzzle</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: Arial, sans-serif;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(30px, 1fr));
+      gap: 2px;
+      margin: 20px 0;
+    }
+
+    .grid-cell {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #dee2e6;
+      background-color: #fff;
+      text-transform: uppercase;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .grid-cell.highlighted {
+      background-color: #ffc107;
+    }
+
+    #word-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    #word-list li {
+      margin: 5px 0;
+    }
+
+    .found {
+      text-decoration: line-through;
+      color: green;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container my-5">
+    <h1 class="text-center">Word Search Puzzle</h1>
+    <p class="text-center text-muted">Find all the hidden words in the puzzle!</p>
+
+    <!-- Puzzle Grid -->
+    <div id="grid" class="mx-auto"></div>
+
+    <!-- Word List -->
+    <h3>Word List</h3>
+    <ul id="word-list" class="list-group"></ul>
+
+    <!-- Instructions -->
+    <p class="text-muted mt-4">Instructions: Click and drag to highlight letters. Find all the words in the list to win!</p>
+  </div>
+
+  <script>
+    const tsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRctFoXA1UtFJe4z7SYVhhBqsI9Brsb2Uhajfsz8SdMnAtsiY_wrL8elX0GSxB9I7tBtLfjN2vDAvtC/pub?gid=1216912764&single=true&output=tsv';
+    const gridSize = 12;
+    const gridElement = document.getElementById('grid');
+    const wordListElement = document.getElementById('word-list');
+    let words = [];
+    let grid = [];
+    let selectedCells = [];
+    let isSelecting = false;
+
+    async function fetchWords() {
+      const response = await fetch(tsvUrl);
+      const tsvText = await response.text();
+      words = tsvText.split('\n').map(row => row.trim()).filter(row => row !== '');
+      initializeGame();
+    }
+
+    function initializeGame() {
+      generateGrid();
+      placeWords();
+      fillEmptySpaces();
+      renderGrid();
+      renderWordList();
+    }
+
+    function generateGrid() {
+      grid = Array.from({ length: gridSize }, () =>
+        Array.from({ length: gridSize }, () => '')
+      );
+    }
+
+    function placeWords() {
+      const directions = [
+        [0, 1], [1, 0], [1, 1], [1, -1], [0, -1], [-1, 0], [-1, -1], [-1, 1]
+      ];
+
+      words.forEach(word => {
+        let placed = false;
+        while (!placed) {
+          const row = Math.floor(Math.random() * gridSize);
+          const col = Math.floor(Math.random() * gridSize);
+          const [dRow, dCol] = directions[Math.floor(Math.random() * directions.length)];
+          placed = canPlaceWord(word, row, col, dRow, dCol);
+          if (placed) {
+            for (let i = 0; i < word.length; i++) {
+              grid[row + i * dRow][col + i * dCol] = word[i];
+            }
+          }
+        }
+      });
+    }
+
+    function canPlaceWord(word, row, col, dRow, dCol) {
+      for (let i = 0; i < word.length; i++) {
+        const newRow = row + i * dRow;
+        const newCol = col + i * dCol;
+        if (
+          newRow < 0 || newRow >= gridSize ||
+          newCol < 0 || newCol >= gridSize ||
+          (grid[newRow][newCol] !== '' && grid[newRow][newCol] !== word[i])
+        ) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function fillEmptySpaces() {
+      for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+          if (grid[i][j] === '') {
+            grid[i][j] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+          }
+        }
+      }
+    }
+
+    function renderGrid() {
+      gridElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+      gridElement.innerHTML = '';
+      for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.textContent = grid[i][j];
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          cell.addEventListener('mousedown', startSelection);
+          cell.addEventListener('mousemove', continueSelection);
+          cell.addEventListener('mouseup', endSelection);
+          gridElement.appendChild(cell);
+        }
+      }
+      document.addEventListener('mouseup', () => { isSelecting = false; });
+    }
+
+    function renderWordList() {
+      wordListElement.innerHTML = '';
+      words.forEach(word => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = word;
+        li.dataset.word = word;
+        wordListElement.appendChild(li);
+      });
+    }
+
+    function startSelection(e) {
+      isSelecting = true;
+      selectedCells = [];
+      highlightCell(e.target);
+    }
+
+    function continueSelection(e) {
+      if (isSelecting) highlightCell(e.target);
+    }
+
+    function endSelection() {
+      const selectedWord = selectedCells.map(cell => cell.textContent).join('');
+      const reversedWord = selectedCells.map(cell => cell.textContent).reverse().join('');
+      if (words.includes(selectedWord) || words.includes(reversedWord)) {
+        selectedCells.forEach(cell => cell.classList.add('highlighted'));
+        const matchedWord = words.includes(selectedWord) ? selectedWord : reversedWord;
+        const listItem = Array.from(wordListElement.children).find(
+          item => item.dataset.word === matchedWord
+        );
+        if (listItem) listItem.classList.add('found');
+        words = words.filter(word => word !== matchedWord);
+      }
+      selectedCells = [];
+    }
+
+    function highlightCell(cell) {
+      if (!cell.classList.contains('grid-cell') || selectedCells.includes(cell)) return;
+      cell.classList.add('highlighted');
+      selectedCells.push(cell);
+    }
+
+    fetchWords();
+  </script>
+</body>
+
+</html>

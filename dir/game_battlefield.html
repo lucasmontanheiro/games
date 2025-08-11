@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battlefield Game</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-gap: 5px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 100%;
+            padding-top: 100%; /* Keeps cells square */
+            position: relative;
+            border: 1px solid #ccc;
+            background-color: #e9ecef;
+            cursor: pointer;
+        }
+        .cell.attacked {
+            background-color: #ff6b6b;
+            cursor: not-allowed;
+        }
+        .cell.hit {
+            background-color: #28a745;
+        }
+        .cell.miss {
+            background-color: #6c757d;
+        }
+        .cell span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: white;
+            display: none;
+        }
+        .cell.attacked span {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h1 class="my-4">Battlefield Game</h1>
+        <div id="playerBoard" class="game-board"></div>
+        <div id="enemyBoard" class="game-board"></div>
+        <p id="status" class="mt-4 fw-bold">Player's Turn</p>
+        <button id="restartBtn" class="btn btn-primary mt-3">Restart Game</button>
+    </div>
+
+    <script>
+        const gridSize = 10;
+        const shipCount = 5;
+        let playerTurn = true; // true = Player's turn, false = Enemy's turn
+        let playerShips = [];
+        let enemyShips = [];
+
+        // Initialize boards and game
+        function initializeGame() {
+            const playerBoard = document.getElementById('playerBoard');
+            const enemyBoard = document.getElementById('enemyBoard');
+            playerBoard.innerHTML = '';
+            enemyBoard.innerHTML = '';
+            playerShips = [];
+            enemyShips = [];
+
+            // Create Player and Enemy boards
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const playerCell = createCell('player', i);
+                const enemyCell = createCell('enemy', i);
+
+                playerBoard.appendChild(playerCell);
+                enemyBoard.appendChild(enemyCell);
+            }
+
+            // Place ships
+            playerShips = placeShipsRandomly();
+            enemyShips = placeShipsRandomly();
+
+            updateStatus('Player\'s Turn');
+        }
+
+        // Create a single cell
+        function createCell(boardType, index) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.index = index;
+            cell.dataset.board = boardType;
+
+            if (boardType === 'enemy') {
+                cell.addEventListener('click', () => handleAttack(cell));
+            }
+
+            return cell;
+        }
+
+        // Place ships randomly on the board
+        function placeShipsRandomly() {
+            const ships = [];
+            while (ships.length < shipCount) {
+                const index = Math.floor(Math.random() * gridSize * gridSize);
+                if (!ships.includes(index)) {
+                    ships.push(index);
+                }
+            }
+            return ships;
+        }
+
+        // Handle attack on a cell
+        function handleAttack(cell) {
+            if (!playerTurn || cell.classList.contains('attacked')) return;
+
+            const index = parseInt(cell.dataset.index);
+            cell.classList.add('attacked');
+
+            if (enemyShips.includes(index)) {
+                cell.classList.add('hit');
+                cell.innerHTML = '<span>💥</span>';
+                enemyShips = enemyShips.filter(ship => ship !== index);
+                if (enemyShips.length === 0) {
+                    updateStatus('🎉 Player Wins!');
+                    return;
+                }
+            } else {
+                cell.classList.add('miss');
+                cell.innerHTML = '<span>❌</span>';
+            }
+
+            playerTurn = false;
+            updateStatus('Enemy\'s Turn');
+            setTimeout(enemyAttack, 1000);
+        }
+
+        // Enemy's attack logic
+        function enemyAttack() {
+            const playerCells = document.querySelectorAll('.cell[data-board="player"]');
+            let index;
+
+            do {
+                index = Math.floor(Math.random() * gridSize * gridSize);
+            } while (playerCells[index].classList.contains('attacked'));
+
+            const cell = playerCells[index];
+            cell.classList.add('attacked');
+
+            if (playerShips.includes(index)) {
+                cell.classList.add('hit');
+                cell.innerHTML = '<span>💥</span>';
+                playerShips = playerShips.filter(ship => ship !== index);
+                if (playerShips.length === 0) {
+                    updateStatus('💀 Enemy Wins!');
+                    return;
+                }
+            } else {
+                cell.classList.add('miss');
+                cell.innerHTML = '<span>❌</span>';
+            }
+
+            playerTurn = true;
+            updateStatus('Player\'s Turn');
+        }
+
+        // Update game status
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        // Restart game
+        document.getElementById('restartBtn').addEventListener('click', initializeGame);
+
+        // Initialize the game on load
+        window.onload = initializeGame;
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

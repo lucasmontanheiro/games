@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive word-formation game using a TVS data structure. Mobile-first, responsive, and built with Bootstrap 5.">
+  <title>Word Formation Game</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* General styling */
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    .game-container {
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+    .letter-box {
+      width: 50px;
+      height: 50px;
+      background-color: #0d6efd;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 5px;
+      cursor: grab;
+      margin: 5px;
+    }
+    .letter-box.dragging {
+      opacity: 0.6;
+    }
+    .drop-area {
+      min-height: 70px;
+      background-color: #e9ecef;
+      border: 2px dashed #6c757d;
+      border-radius: 5px;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+    }
+    .drop-area.occupied {
+      border-color: #198754;
+    }
+    .score-board {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Game Container -->
+  <div class="game-container text-center">
+    <h2 class="mb-4">Word Formation Game</h2>
+    <p>Drag the letters below to the box to form valid words. Test your vocabulary skills!</p>
+
+    <!-- Letters Area -->
+    <div class="d-flex justify-content-center mb-3" id="letters-area">
+      <!-- Dynamically Generated Letter Boxes -->
+    </div>
+
+    <!-- Drop Area -->
+    <div class="drop-area" id="drop-area">
+      <!-- User will drop letters here -->
+    </div>
+
+    <!-- Scoreboard -->
+    <div class="score-board">
+      <span>Score: <strong id="score">0</strong></span>
+      <button class="btn btn-danger btn-sm" id="reset-btn">Reset Game</button>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    /**
+     * Game Configuration
+     * - TVS Data: Simple dictionary for valid words.
+     * - Gameplay logic for letter drag/drop and word validation.
+     */
+
+    // TVS Data: Simple word dictionary
+    const dictionary = ['CAT', 'DOG', 'BAT', 'RAT', 'CAR', 'BAR'];
+
+    // Game State
+    let score = 0;
+
+    /**
+     * Initialize the game with random letters
+     */
+    function initializeGame() {
+      const lettersArea = document.getElementById('letters-area');
+      const dropArea = document.getElementById('drop-area');
+
+      // Clear previous game state
+      lettersArea.innerHTML = '';
+      dropArea.innerHTML = '';
+      dropArea.classList.remove('occupied');
+      updateScore(0);
+
+      // Generate random letters
+      const randomLetters = getRandomLetters(7); // Generate 7 random letters
+      randomLetters.forEach(letter => {
+        const letterBox = createLetterBox(letter);
+        lettersArea.appendChild(letterBox);
+      });
+
+      // Add drop area event listeners
+      setupDropArea(dropArea);
+    }
+
+    /**
+     * Generate an array of random uppercase letters
+     * @param {number} count - Number of letters to generate
+     * @returns {Array} Random letters
+     */
+    function getRandomLetters(count) {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      return Array.from({ length: count }, () => letters[Math.floor(Math.random() * letters.length)]);
+    }
+
+    /**
+     * Create a draggable letter box
+     * @param {string} letter - Letter for the box
+     * @returns {HTMLElement} Letter box element
+     */
+    function createLetterBox(letter) {
+      const letterBox = document.createElement('div');
+      letterBox.className = 'letter-box';
+      letterBox.textContent = letter;
+      letterBox.setAttribute('draggable', 'true');
+
+      // Drag events
+      letterBox.addEventListener('dragstart', () => letterBox.classList.add('dragging'));
+      letterBox.addEventListener('dragend', () => letterBox.classList.remove('dragging'));
+
+      return letterBox;
+    }
+
+    /**
+     * Setup drag-and-drop behavior for the drop area
+     * @param {HTMLElement} dropArea - The drop area element
+     */
+    function setupDropArea(dropArea) {
+      dropArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropArea.classList.add('occupied');
+      });
+
+      dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('occupied');
+      });
+
+      dropArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropArea.classList.remove('occupied');
+
+        const draggedLetter = document.querySelector('.dragging');
+        if (draggedLetter) {
+          dropArea.appendChild(draggedLetter);
+        }
+
+        // Check if the formed word is valid
+        const formedWord = getFormedWord(dropArea);
+        if (dictionary.includes(formedWord)) {
+          updateScore(score + 10); // Increment score for valid word
+        }
+      });
+    }
+
+    /**
+     * Get the word formed by the letters in the drop area
+     * @param {HTMLElement} dropArea - The drop area element
+     * @returns {string} Formed word
+     */
+    function getFormedWord(dropArea) {
+      return Array.from(dropArea.children).map(letterBox => letterBox.textContent).join('');
+    }
+
+    /**
+     * Update the score display
+     * @param {number} newScore - New score value
+     */
+    function updateScore(newScore) {
+      score = newScore;
+      document.getElementById('score').textContent = score;
+    }
+
+    // Event Listener: Reset Game
+    document.getElementById('reset-btn').addEventListener('click', initializeGame);
+
+    // Initialize the game on page load
+    initializeGame();
+  </script>
+</body>
+</html>

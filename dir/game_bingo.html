@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Bingo</title>
+    <!-- Description -->
+    <!-- Online Bingo Game: A player competes against 5 computer-controlled players in a bingo game. 
+         The game is mobile-first, built using HTML, CSS, and Bootstrap, with clear inline comments 
+         to explain functionality for developers to enhance and maintain the project. -->
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles for the Bingo game */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .bingo-card {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin: 10px 0;
+        }
+        .bingo-cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+        }
+        .bingo-cell.marked {
+            background-color: #28a745;
+            color: #fff;
+            cursor: default;
+        }
+        .winner {
+            font-size: 1.5rem;
+            color: #dc3545;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+        @media (max-width: 576px) {
+            .bingo-cell {
+                width: 40px;
+                height: 40px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <!-- Title -->
+        <h1 class="my-4">Online Bingo 🎉</h1>
+
+        <!-- Player's Card -->
+        <div>
+            <h2>Your Card</h2>
+            <div id="playerCard" class="bingo-card"></div>
+        </div>
+
+        <!-- Computer Players -->
+        <div>
+            <h3>Computer Players</h3>
+            <div id="computerCards" class="d-flex justify-content-around flex-wrap">
+                <div class="bingo-card" id="computer1Card"></div>
+                <div class="bingo-card" id="computer2Card"></div>
+                <div class="bingo-card" id="computer3Card"></div>
+                <div class="bingo-card" id="computer4Card"></div>
+                <div class="bingo-card" id="computer5Card"></div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <button id="drawNumber" class="btn btn-primary my-3">Draw Number</button>
+        <div id="currentNumber" class="mt-3">Number: <span>None</span></div>
+        <div id="winner" class="winner"></div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Bingo settings
+        const playerCount = 5; // Number of computer players
+        const bingoNumbers = Array.from({ length: 75 }, (_, i) => i + 1); // Numbers 1 to 75
+        let drawnNumbers = []; // Track drawn numbers
+        let gameEnded = false;
+
+        // Function to generate a random bingo card
+        function generateCard() {
+            const card = [];
+            for (let i = 0; i < 5; i++) {
+                const column = Array.from({ length: 15 }, (_, j) => j + 1 + i * 15); // Numbers for each column
+                card.push(...shuffleArray(column).slice(0, 5));
+            }
+            return card;
+        }
+
+        // Shuffle an array using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Render a bingo card in the DOM
+        function renderCard(card, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = ''; // Clear previous content
+            card.forEach((number, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'bingo-cell';
+                cell.textContent = index === 12 ? 'FREE' : number; // Center cell is "FREE"
+                if (index === 12) cell.classList.add('marked');
+                cell.dataset.number = number;
+                container.appendChild(cell);
+            });
+        }
+
+        // Mark a number on a card
+        function markNumber(card, number) {
+            const cells = document.querySelectorAll(`#${card} .bingo-cell`);
+            cells.forEach(cell => {
+                if (cell.dataset.number == number) {
+                    cell.classList.add('marked');
+                }
+            });
+        }
+
+        // Check for a winner
+        function checkWinner(cardId) {
+            const cells = document.querySelectorAll(`#${cardId} .bingo-cell`);
+            const marked = [...cells].map(cell => cell.classList.contains('marked'));
+            const winPatterns = [
+                // Rows
+                [0, 1, 2, 3, 4],
+                [5, 6, 7, 8, 9],
+                [10, 11, 12, 13, 14],
+                [15, 16, 17, 18, 19],
+                [20, 21, 22, 23, 24],
+                // Columns
+                [0, 5, 10, 15, 20],
+                [1, 6, 11, 16, 21],
+                [2, 7, 12, 17, 22],
+                [3, 8, 13, 18, 23],
+                [4, 9, 14, 19, 24],
+                // Diagonals
+                [0, 6, 12, 18, 24],
+                [4, 8, 12, 16, 20],
+            ];
+
+            return winPatterns.some(pattern => pattern.every(index => marked[index]));
+        }
+
+        // Draw a number
+        function drawNumber() {
+            if (gameEnded) return;
+            if (bingoNumbers.length === 0) {
+                alert('All numbers have been drawn!');
+                return;
+            }
+
+            // Draw a random number
+            const randomIndex = Math.floor(Math.random() * bingoNumbers.length);
+            const number = bingoNumbers.splice(randomIndex, 1)[0];
+            drawnNumbers.push(number);
+
+            document.getElementById('currentNumber').querySelector('span').textContent = number;
+
+            // Mark number on all cards
+            markNumber('playerCard', number);
+            for (let i = 1; i <= playerCount; i++) {
+                markNumber(`computer${i}Card`, number);
+            }
+
+            // Check for a winner
+            if (checkWinner('playerCard')) {
+                document.getElementById('winner').textContent = '🎉 You Win! 🎉';
+                gameEnded = true;
+            }
+
+            for (let i = 1; i <= playerCount; i++) {
+                if (checkWinner(`computer${i}Card`)) {
+                    document.getElementById('winner').textContent = `Computer ${i} Wins!`;
+                    gameEnded = true;
+                }
+            }
+        }
+
+        // Initialize the game
+        function initGame() {
+            // Generate and render player card
+            const playerCard = generateCard();
+            renderCard(playerCard, 'playerCard');
+
+            // Generate and render computer cards
+            for (let i = 1; i <= playerCount; i++) {
+                const computerCard = generateCard();
+                renderCard(computerCard, `computer${i}Card`);
+            }
+        }
+
+        // Add event listener to the draw button
+        document.getElementById('drawNumber').addEventListener('click', drawNumber);
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>

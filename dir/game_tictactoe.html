@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe Game</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Custom styles for Tic-Tac-Toe */
+    body {
+      background-color: #f8f9fa;
+      color: #333;
+      font-family: 'Arial', sans-serif;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 5px;
+      max-width: 300px;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: bold;
+      border: 2px solid #333;
+      cursor: pointer;
+      background-color: #fff;
+    }
+    .cell.taken {
+      pointer-events: none;
+      background-color: #f1f1f1;
+    }
+    .winner {
+      background-color: #d4edda;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center">Tic-Tac-Toe Game 🎮</h1>
+    <div id="game-board" class="board">
+      <!-- Game cells will be dynamically generated here -->
+    </div>
+    <div class="text-center mt-4">
+      <h3 id="game-status">Your Turn: X</h3>
+      <button id="restart-button" class="btn btn-primary mt-2">Restart Game</button>
+    </div>
+  </div>
+
+  <script>
+    // Variables to track the game state
+    let board = Array(9).fill(null); // Array to represent the board (9 cells)
+    let currentPlayer = "X"; // Current player: "X" or "O"
+    let isGameActive = true; // Flag to check if the game is active
+
+    // Winning combinations (indices of the board array)
+    const winningCombinations = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+
+    // Initialize the game
+    function initializeGame() {
+      const boardElement = document.getElementById("game-board");
+      boardElement.innerHTML = ""; // Clear the board
+
+      // Create cells dynamically
+      board.forEach((_, index) => {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = index; // Store the cell index
+        cell.addEventListener("click", handleCellClick); // Add click event
+        boardElement.appendChild(cell);
+      });
+
+      // Reset variables
+      board = Array(9).fill(null);
+      currentPlayer = "X";
+      isGameActive = true;
+      updateGameStatus("Your Turn: X");
+    }
+
+    // Handle cell click
+    function handleCellClick(event) {
+      const cell = event.target;
+      const cellIndex = cell.dataset.index;
+
+      // If the cell is already taken or the game is over, ignore the click
+      if (board[cellIndex] || !isGameActive) return;
+
+      // Update the board and UI
+      board[cellIndex] = currentPlayer;
+      cell.textContent = currentPlayer;
+      cell.classList.add("taken");
+
+      // Check for a win or draw
+      if (checkWin()) {
+        isGameActive = false;
+        updateGameStatus(`Player ${currentPlayer} Wins! 🎉`);
+        highlightWinningCells();
+      } else if (board.every(cell => cell !== null)) {
+        isGameActive = false;
+        updateGameStatus("It's a Draw! 🤝");
+      } else {
+        // Switch players
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        updateGameStatus(`Your Turn: ${currentPlayer}`);
+      }
+    }
+
+    // Check if the current player has won
+    function checkWin() {
+      return winningCombinations.some(combination => {
+        const [a, b, c] = combination;
+        return (
+          board[a] === currentPlayer &&
+          board[b] === currentPlayer &&
+          board[c] === currentPlayer
+        );
+      });
+    }
+
+    // Highlight the winning cells
+    function highlightWinningCells() {
+      winningCombinations.forEach(combination => {
+        const [a, b, c] = combination;
+        if (
+          board[a] === currentPlayer &&
+          board[b] === currentPlayer &&
+          board[c] === currentPlayer
+        ) {
+          const boardElement = document.getElementById("game-board");
+          boardElement.children[a].classList.add("winner");
+          boardElement.children[b].classList.add("winner");
+          boardElement.children[c].classList.add("winner");
+        }
+      });
+    }
+
+    // Update the game status message
+    function updateGameStatus(message) {
+      const statusElement = document.getElementById("game-status");
+      statusElement.textContent = message;
+    }
+
+    // Restart the game
+    document.getElementById("restart-button").addEventListener("click", initializeGame);
+
+    // Start the game on page load
+    window.onload = initializeGame;
+  </script>
+</body>
+</html>

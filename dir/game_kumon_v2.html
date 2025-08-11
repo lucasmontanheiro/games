@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kumon Style Math Game</title>
+    <style>
+        /* General Reset */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Game Container Styling */
+        .game-container {
+            max-width: 400px;
+            width: 100%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .question {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #fff;
+            background: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .feedback {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .feedback.correct {
+            color: green;
+            font-weight: bold;
+        }
+
+        .feedback.incorrect {
+            color: red;
+            font-weight: bold;
+        }
+
+        .score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="game">
+            <!-- Game Elements Will Be Dynamically Inserted Here -->
+        </div>
+    </div>
+
+    <script>
+        // Generate random questions
+        function generateQuestions(num) {
+            const operations = ['+', '-', 'x', '÷'];
+            const questions = [];
+            for (let i = 0; i < num; i++) {
+                const a = Math.floor(Math.random() * 10) + 1;
+                const b = Math.floor(Math.random() * 10) + 1;
+                const operation = operations[Math.floor(Math.random() * operations.length)];
+                let answer;
+
+                switch (operation) {
+                    case '+':
+                        answer = a + b;
+                        break;
+                    case '-':
+                        answer = a - b;
+                        break;
+                    case 'x':
+                        answer = a * b;
+                        break;
+                    case '÷':
+                        answer = (a / b).toFixed(2);
+                        break;
+                }
+
+                questions.push({ question: `${a} ${operation} ${b}`, answer: answer.toString() });
+            }
+            return questions;
+        }
+
+        const questions = generateQuestions(50); // 50-round game
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctAnswers = 0;
+        let incorrectAnswers = 0;
+
+        function initializeGame() {
+            const gameDiv = document.getElementById("game");
+
+            if (currentQuestionIndex < questions.length) {
+                gameDiv.innerHTML = `
+                    <div class="question">
+                        ${questions[currentQuestionIndex].question}
+                    </div>
+                    <form id="answerForm">
+                        <input type="text" id="answer" placeholder="Your answer" style="width: 100%; padding: 10px; margin-top: 15px; font-size: 1rem;" required>
+                        <button type="submit" class="btn">Submit</button>
+                    </form>
+                    <div id="feedback" class="feedback"></div>
+                    <div class="score">Score: ${score}</div>
+                `;
+
+                // Add event listener for form submission
+                const answerForm = document.getElementById("answerForm");
+                answerForm.addEventListener("submit", handleAnswerSubmit);
+            } else {
+                showGameOver();
+            }
+        }
+
+        function handleAnswerSubmit(event) {
+            event.preventDefault();
+            const userAnswer = document.getElementById("answer").value.trim();
+            const correctAnswer = questions[currentQuestionIndex].answer;
+            const feedbackDiv = document.getElementById("feedback");
+
+            if (userAnswer === correctAnswer) {
+                score += 2;
+                correctAnswers++;
+                feedbackDiv.textContent = "Correct! Great Job!";
+                feedbackDiv.className = "feedback correct";
+            } else {
+                score -= 1;
+                incorrectAnswers++;
+                feedbackDiv.textContent = "Incorrect! Try again.";
+                feedbackDiv.className = "feedback incorrect";
+            }
+
+            currentQuestionIndex++;
+            setTimeout(initializeGame, 1000);
+        }
+
+        function showGameOver() {
+            const gameDiv = document.getElementById("game");
+            gameDiv.innerHTML = `
+                <h1 class="text-center">🎉 Game Over! 🎉</h1>
+                <p class="text-center">Total Score: ${score}</p>
+                <p class="text-center">Correct Answers: ${correctAnswers}</p>
+                <p class="text-center">Incorrect Answers: ${incorrectAnswers}</p>
+                <button class="btn" onclick="restartGame()">Play Again</button>
+                <button class="btn" onclick="shareScore()">Share Score</button>
+            `;
+        }
+
+        function restartGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            correctAnswers = 0;
+            incorrectAnswers = 0;
+            initializeGame();
+        }
+
+        function shareScore() {
+            const email = "laboratoriosmacondo@gmail.com";
+            const subject = "My Kumon Math Game Score";
+            const body = `I scored ${score} points in the Kumon Math Game! Correct Answers: ${correctAnswers}, Incorrect Answers: ${incorrectAnswers}`;
+            window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        // Start the game on page load
+        initializeGame();
+    </script>
+</body>
+</html>

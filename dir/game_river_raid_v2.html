@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>River Raid Clone</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            overflow: hidden;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #123456; /* River-like background */
+            border: 2px solid #333;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .controls button {
+            background-color: #444;
+            color: white;
+            border: none;
+            font-size: 20px;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .controls button:active {
+            background-color: #666;
+        }
+
+        .triangle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .side-arrows {
+            display: flex;
+            justify-content: space-between;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="controls">
+        <div class="triangle">
+            <button id="fire">▲</button>
+            <div class="side-arrows">
+                <button id="left">◀</button>
+                <button id="right">▶</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Constants
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 300;
+        canvas.height = 500;
+
+        const plane = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 60,
+            width: 30,
+            height: 40,
+            speed: 5,
+            color: 'yellow'
+        };
+
+        const bullets = [];
+        const blocks = [];
+        const blockSize = 40;
+
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ArrowUp: false
+        };
+
+        // Controls for Mobile Buttons
+        document.getElementById('left').addEventListener('click', () => movePlane(-plane.speed));
+        document.getElementById('right').addEventListener('click', () => movePlane(plane.speed));
+        document.getElementById('fire').addEventListener('click', shoot);
+
+        function movePlane(delta) {
+            plane.x += delta;
+            plane.x = Math.max(0, Math.min(canvas.width - plane.width, plane.x)); // Keep within bounds
+        }
+
+        function shoot() {
+            bullets.push({
+                x: plane.x + plane.width / 2 - 2.5,
+                y: plane.y,
+                width: 5,
+                height: 10,
+                speed: 7
+            });
+        }
+
+        // Handle Desktop Keyboard Inputs
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Update game state
+        function update() {
+            // Move the plane based on keys
+            if (keys.ArrowLeft) plane.x -= plane.speed;
+            if (keys.ArrowRight) plane.x += plane.speed;
+            if (keys.ArrowUp) shoot();
+
+            plane.x = Math.max(0, Math.min(canvas.width - plane.width, plane.x)); // Keep within bounds
+
+            // Move bullets
+            bullets.forEach((bullet, index) => {
+                bullet.y -= bullet.speed;
+                if (bullet.y < 0) bullets.splice(index, 1); // Remove out-of-bound bullets
+            });
+
+            // Spawn blocks
+            if (Math.random() < 0.03) {
+                blocks.push({
+                    x: Math.random() * (canvas.width - blockSize),
+                    y: -blockSize,
+                    width: blockSize,
+                    height: blockSize,
+                    color: 'red'
+                });
+            }
+
+            // Move blocks and check collisions
+            blocks.forEach((block, blockIndex) => {
+                block.y += 2;
+
+                // Check collision with plane
+                if (
+                    block.x < plane.x + plane.width &&
+                    block.x + block.width > plane.x &&
+                    block.y < plane.y + plane.height &&
+                    block.y + block.height > plane.y
+                ) {
+                    alert('Game Over!');
+                    document.location.reload();
+                }
+
+                // Check collision with bullets
+                bullets.forEach((bullet, bulletIndex) => {
+                    if (
+                        bullet.x < block.x + block.width &&
+                        bullet.x + bullet.width > block.x &&
+                        bullet.y < block.y + block.height &&
+                        bullet.y + bullet.height > block.y
+                    ) {
+                        blocks.splice(blockIndex, 1);
+                        bullets.splice(bulletIndex, 1);
+                    }
+                });
+
+                if (block.y > canvas.height) blocks.splice(blockIndex, 1); // Remove out-of-bound blocks
+            });
+        }
+
+        // Render game state
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw plane
+            ctx.fillStyle = plane.color;
+            ctx.fillRect(plane.x, plane.y, plane.width, plane.height);
+
+            // Draw bullets
+            bullets.forEach((bullet) => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+
+            // Draw blocks
+            blocks.forEach((block) => {
+                ctx.fillStyle = block.color;
+                ctx.fillRect(block.x, block.y, block.width, block.height);
+            });
+        }
+
+        // Main game loop
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game loop
+        gameLoop();
+    </script>
+</body>
+</html>

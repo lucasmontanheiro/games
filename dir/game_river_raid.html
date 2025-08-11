@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>River Raid</title>
+  <style>
+    /* Body and Game Container */
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+    /* Mobile Controls */
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    .button {
+      width: 60px;
+      height: 60px;
+      background: #444;
+      color: white;
+      border-radius: 10px;
+      font-size: 24px;
+      text-align: center;
+      line-height: 60px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .button:active {
+      background: #666;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div class="controls">
+    <div class="button" id="left">⬅️</div>
+    <div class="button" id="right">➡️</div>
+  </div>
+
+  <script>
+    // Game Constants
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 400;
+    canvas.height = 600;
+
+    // Player Plane
+    const plane = {
+      x: canvas.width / 2 - 15,
+      y: canvas.height - 100,
+      width: 30,
+      height: 30,
+      speed: 5,
+    };
+
+    // Game Elements
+    const obstacles = [];
+    const fuels = [];
+    const scrollSpeed = 2;
+
+    let keys = {};
+    let score = 0;
+    let gameRunning = true;
+
+    // Key Handlers
+    document.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+    });
+    document.addEventListener('keyup', (e) => {
+      keys[e.key] = false;
+    });
+
+    // Mobile Controls
+    document.getElementById('left').addEventListener('mousedown', () => keys['ArrowLeft'] = true);
+    document.getElementById('left').addEventListener('mouseup', () => keys['ArrowLeft'] = false);
+    document.getElementById('right').addEventListener('mousedown', () => keys['ArrowRight'] = true);
+    document.getElementById('right').addEventListener('mouseup', () => keys['ArrowRight'] = false);
+
+    // Obstacle Generator
+    function generateObstacle() {
+      const x = Math.random() * (canvas.width - 40);
+      obstacles.push({ x, y: -40, width: 40, height: 40 });
+    }
+
+    // Fuel Generator
+    function generateFuel() {
+      const x = Math.random() * (canvas.width - 30);
+      fuels.push({ x, y: -30, width: 30, height: 30 });
+    }
+
+    // Collision Detection
+    function checkCollision(rect1, rect2) {
+      return (
+        rect1.x < rect2.x + rect2.width &&
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y
+      );
+    }
+
+    // Game Loop
+    function update() {
+      if (!gameRunning) return;
+
+      // Clear canvas
+      ctx.fillStyle = 'blue';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw River Boundaries
+      ctx.fillStyle = 'green';
+      ctx.fillRect(0, 0, 40, canvas.height); // Left
+      ctx.fillRect(canvas.width - 40, 0, 40, canvas.height); // Right
+
+      // Player Movement
+      if (keys['ArrowLeft'] && plane.x > 40) plane.x -= plane.speed;
+      if (keys['ArrowRight'] && plane.x + plane.width < canvas.width - 40) plane.x += plane.speed;
+
+      // Draw Player
+      ctx.fillStyle = 'red';
+      ctx.fillRect(plane.x, plane.y, plane.width, plane.height);
+
+      // Update Obstacles
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obs = obstacles[i];
+        obs.y += scrollSpeed;
+        ctx.fillStyle = 'brown';
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        // Collision
+        if (checkCollision(plane, obs)) {
+          gameRunning = false;
+          alert('Game Over! Your score: ' + score);
+          document.location.reload();
+        }
+
+        // Remove off-screen
+        if (obs.y > canvas.height) obstacles.splice(i, 1);
+      }
+
+      // Update Fuel
+      for (let i = fuels.length - 1; i >= 0; i--) {
+        const fuel = fuels[i];
+        fuel.y += scrollSpeed;
+        ctx.fillStyle = 'yellow';
+        ctx.fillRect(fuel.x, fuel.y, fuel.width, fuel.height);
+
+        // Collect Fuel
+        if (checkCollision(plane, fuel)) {
+          score += 10;
+          fuels.splice(i, 1);
+        }
+
+        // Remove off-screen
+        if (fuel.y > canvas.height) fuels.splice(i, 1);
+      }
+
+      // Spawn New Elements
+      if (Math.random() < 0.02) generateObstacle();
+      if (Math.random() < 0.01) generateFuel();
+
+      // Display Score
+      ctx.fillStyle = 'white';
+      ctx.font = '20px Arial';
+      ctx.fillText('Score: ' + score, 10, 20);
+
+      requestAnimationFrame(update);
+    }
+
+    // Start Game
+    update();
+  </script>
+</body>
+</html>

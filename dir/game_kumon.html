@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kumon Style Math Game</title>
+    <style>
+        /* General Reset */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Game Container Styling */
+        .game-container {
+            max-width: 400px;
+            width: 100%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .question {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #fff;
+            background: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .feedback {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .feedback.correct {
+            color: green;
+            font-weight: bold;
+        }
+
+        .feedback.incorrect {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jogo da Matemática</h1>
+    <p>Quero ver o Benício e a Duda se tornarem craques na matemática!</p>
+    <div class="game-container">
+        <div id="game">
+            <!-- Game Elements Will Be Dynamically Inserted Here -->
+        </div>
+    </div>
+
+    <script>
+        // Questions Data (Simulating CSV Content)
+        const questions = [
+            { question: "5 + 3", answer: "8" },
+            { question: "7 - 2", answer: "5" },
+            { question: "4 x 2", answer: "8" },
+            { question: "9 ÷ 3", answer: "3" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let feedbackTimeout;
+
+        // Initialize the game
+        function initializeGame() {
+            const gameDiv = document.getElementById("game");
+            gameDiv.innerHTML = `
+                <div class="question">
+                    ${questions[currentQuestionIndex].question}
+                </div>
+                <form id="answerForm">
+                    <input type="text" id="answer" placeholder="Your answer" style="width: 100%; padding: 10px; margin-top: 15px; font-size: 1rem;" required>
+                    <button type="submit" class="btn">Submit</button>
+                </form>
+                <div id="feedback" class="feedback"></div>
+            `;
+
+            // Add event listener for form submission
+            const answerForm = document.getElementById("answerForm");
+            answerForm.addEventListener("submit", handleAnswerSubmit);
+        }
+
+        // Handle form submission
+        function handleAnswerSubmit(event) {
+            event.preventDefault();
+            const userAnswer = document.getElementById("answer").value.trim();
+            const correctAnswer = questions[currentQuestionIndex].answer;
+            const feedbackDiv = document.getElementById("feedback");
+
+            // Clear any previous feedback timeout
+            clearTimeout(feedbackTimeout);
+
+            if (userAnswer === correctAnswer) {
+                feedbackDiv.textContent = "Correct! Great Job!";
+                feedbackDiv.className = "feedback correct";
+                currentQuestionIndex++;
+
+                // Move to the next question or end the game
+                if (currentQuestionIndex < questions.length) {
+                    feedbackTimeout = setTimeout(initializeGame, 1000);
+                } else {
+                    feedbackTimeout = setTimeout(showGameOver, 1000);
+                }
+            } else {
+                feedbackDiv.textContent = "Incorrect! Try again.";
+                feedbackDiv.className = "feedback incorrect";
+            }
+        }
+
+        // Show game over message
+        function showGameOver() {
+            const gameDiv = document.getElementById("game");
+            gameDiv.innerHTML = `
+                <h1 class="text-center">🎉 Great Job! 🎉</h1>
+                <p class="text-center">You've completed all the questions!</p>
+                <button class="btn" onclick="restartGame()">Play Again</button>
+            `;
+        }
+
+        // Restart the game
+        function restartGame() {
+            currentQuestionIndex = 0;
+            initializeGame();
+        }
+
+        // Start the game on page load
+        initializeGame();
+    </script>
+</body>
+</html>

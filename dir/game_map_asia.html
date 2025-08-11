@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asia Map Game</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        #map-container {
+            width: 100%;
+            max-width: 700px;
+            margin: 20px auto;
+        }
+        .game-instructions, .text-center {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center mt-4">Asia Map Game</h1>
+    <p class="game-instructions">Click on the correct country on the map as prompted below.</p>
+    <div class="text-center">
+        <p id="question" class="fs-4 fw-bold"></p>
+        <p id="feedback" class="fs-5"></p>
+    </div>
+    <div id="map-container">
+        <div id="geochart-colors" style="width: 100%; height: 433px;"></div>
+    </div>
+</div>
+<script>
+    // Load Google GeoChart
+    google.charts.load('current', {
+        'packages': ['geochart'],
+        'mapsApiKey': '' // Insert your Maps API key here
+    });
+    google.charts.setOnLoadCallback(drawRegionsMap);
+
+    let targetCountry = ""; // Country user must find
+
+    // List of Asian countries for game questions
+    const asianCountries = [
+        'Afghanistan', 'Armenia', 'Azerbaijan', 'Bahrain', 'Bangladesh', 
+        'Bhutan', 'Brunei', 'Cambodia', 'China', 'Cyprus', 'Georgia', 
+        'India', 'Indonesia', 'Iran', 'Iraq', 'Israel', 'Japan', 
+        'Jordan', 'Kazakhstan', 'Kuwait', 'Kyrgyzstan', 'Laos', 'Lebanon', 
+        'Malaysia', 'Maldives', 'Mongolia', 'Myanmar (Burma)', 'Nepal', 
+        'North Korea', 'Oman', 'Pakistan', 'Palestine', 'Philippines', 
+        'Qatar', 'Saudi Arabia', 'Singapore', 'South Korea', 'Sri Lanka', 
+        'Syria', 'Tajikistan', 'Thailand', 'Timor-Leste', 'Turkey', 
+        'Turkmenistan', 'United Arab Emirates', 'Uzbekistan', 'Vietnam', 'Yemen'
+    ];
+
+    function drawRegionsMap() {
+        const data = google.visualization.arrayToDataTable([
+            ['Country', 'Latitude'],
+            ['Afghanistan', 34], ['Armenia', 40], ['Azerbaijan', 40], 
+            ['Bahrain', 26], ['Bangladesh', 23], ['Bhutan', 27], 
+            ['Brunei', 4], ['Cambodia', 11], ['China', 35], 
+            ['Cyprus', 35], ['Georgia', 42], ['India', 20], 
+            ['Indonesia', -5], ['Iran', 32], ['Iraq', 33], 
+            ['Israel', 31], ['Japan', 36], ['Jordan', 31], 
+            ['Kazakhstan', 48], ['Kuwait', 29], ['Kyrgyzstan', 41], 
+            ['Laos', 18], ['Lebanon', 34], ['Malaysia', 3], 
+            ['Maldives', 1], ['Mongolia', 46], ['Myanmar (Burma)', 21], 
+            ['Nepal', 28], ['North Korea', 40], ['Oman', 21], 
+            ['Pakistan', 30], ['Palestine', 32], ['Philippines', 13], 
+            ['Qatar', 25], ['Saudi Arabia', 24], ['Singapore', 1], 
+            ['South Korea', 36], ['Sri Lanka', 7], ['Syria', 35], 
+            ['Tajikistan', 39], ['Thailand', 15], ['Timor-Leste', -8], 
+            ['Turkey', 39], ['Turkmenistan', 38], ['United Arab Emirates', 25], 
+            ['Uzbekistan', 41], ['Vietnam', 16], ['Yemen', 15]
+        ]);
+
+        const options = {
+            region: '142', // Asia
+            colorAxis: {colors: ['#00853f', 'black', '#e31b23']},
+            backgroundColor: '#81d4fa',
+            datalessRegionColor: '#f8bbd0',
+            defaultColor: '#f5f5f5',
+            tooltip: { trigger: 'none' } // Disable tooltips to hide hover information
+        };
+
+        const chart = new google.visualization.GeoChart(document.getElementById('geochart-colors'));
+
+        // Event listener to capture user clicks
+        google.visualization.events.addListener(chart, 'select', function () {
+            const selection = chart.getSelection();
+            if (selection.length > 0) {
+                const selectedCountry = data.getValue(selection[0].row, 0);
+                document.getElementById('feedback').innerText = `You clicked on: ${selectedCountry}`;
+
+                if (selectedCountry === targetCountry) {
+                    document.getElementById('feedback').innerText += "\nCorrect! Well done.";
+                    setTimeout(startGame, 2000);
+                } else {
+                    document.getElementById('feedback').innerText += "\nWrong! Try again.";
+                }
+            }
+        });
+
+        chart.draw(data, options);
+    }
+
+    // Start the game by selecting a random country
+    function startGame() {
+        targetCountry = asianCountries[Math.floor(Math.random() * asianCountries.length)];
+        document.getElementById('question').innerText = `Find this country: ${targetCountry}`;
+        document.getElementById('feedback').innerText = "";
+        drawRegionsMap();
+    }
+
+    // Initialize the game on page load
+    window.onload = startGame;
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Flag Game</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .game-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .flag {
+            font-size: 100px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-options {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .result {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container text-center">
+    <h1 class="mb-4">🌍 Advanced Flag Game</h1>
+    <!-- Display the flag -->
+    <div id="flag" class="flag"></div>
+
+    <!-- Display the question type -->
+    <div id="question-type" class="mb-3 fw-bold"></div>
+
+    <!-- Options buttons -->
+    <div id="options" class="d-grid gap-2"></div>
+
+    <!-- Display the result -->
+    <div id="result" class="result"></div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const countries = [
+        { emoji: "🇺🇸", name: "United States", capital: "Washington, D.C." },
+        { emoji: "🇨🇦", name: "Canada", capital: "Ottawa" },
+        { emoji: "🇫🇷", name: "France", capital: "Paris" },
+        { emoji: "🇩🇪", name: "Germany", capital: "Berlin" },
+        { emoji: "🇯🇵", name: "Japan", capital: "Tokyo" },
+        { emoji: "🇮🇳", name: "India", capital: "New Delhi" },
+        { emoji: "🇧🇷", name: "Brazil", capital: "Brasília" },
+        { emoji: "🇦🇺", name: "Australia", capital: "Canberra" },
+        { emoji: "🇿🇦", name: "South Africa", capital: "Pretoria" },
+        { emoji: "🇮🇹", name: "Italy", capital: "Rome" },
+        { emoji: "🇪🇸", name: "Spain", capital: "Madrid" },
+        { emoji: "🇷🇺", name: "Russia", capital: "Moscow" },
+        { emoji: "🇨🇳", name: "China", capital: "Beijing" },
+        { emoji: "🇰🇷", name: "South Korea", capital: "Seoul" },
+        { emoji: "🇲🇽", name: "Mexico", capital: "Mexico City" },
+        { emoji: "🇦🇷", name: "Argentina", capital: "Buenos Aires" },
+        { emoji: "🇹🇷", name: "Turkey", capital: "Ankara" },
+        { emoji: "🇸🇦", name: "Saudi Arabia", capital: "Riyadh" },
+        { emoji: "🇸🇪", name: "Sweden", capital: "Stockholm" },
+        { emoji: "🇳🇴", name: "Norway", capital: "Oslo" },
+        { emoji: "🇵🇱", name: "Poland", capital: "Warsaw" },
+        { emoji: "🇨🇭", name: "Switzerland", capital: "Bern" },
+        { emoji: "🇦🇹", name: "Austria", capital: "Vienna" },
+        { emoji: "🇮🇱", name: "Israel", capital: "Jerusalem" },
+        { emoji: "🇬🇷", name: "Greece", capital: "Athens" },
+        { emoji: "🇪🇬", name: "Egypt", capital: "Cairo" },
+        { emoji: "🇳🇬", name: "Nigeria", capital: "Abuja" },
+        { emoji: "🇹🇭", name: "Thailand", capital: "Bangkok" },
+        { emoji: "🇻🇳", name: "Vietnam", capital: "Hanoi" },
+        { emoji: "🇵🇭", name: "Philippines", capital: "Manila" },
+        { emoji: "🇳🇿", name: "New Zealand", capital: "Wellington" },
+        { emoji: "🇮🇪", name: "Ireland", capital: "Dublin" },
+        { emoji: "🇧🇪", name: "Belgium", capital: "Brussels" },
+        { emoji: "🇵🇹", name: "Portugal", capital: "Lisbon" },
+        { emoji: "🇮🇸", name: "Iceland", capital: "Reykjavik" },
+        { emoji: "🇿🇲", name: "Zambia", capital: "Lusaka" },
+        { emoji: "🇺🇦", name: "Ukraine", capital: "Kyiv" },
+        { emoji: "🇰🇪", name: "Kenya", capital: "Nairobi" },
+        { emoji: "🇨🇱", name: "Chile", capital: "Santiago" },
+        { emoji: "🇨🇴", name: "Colombia", capital: "Bogotá" },
+        { emoji: "🇦🇱", name: "Albania", capital: "Tirana" },
+        { emoji: "🇲🇦", name: "Morocco", capital: "Rabat" },
+        { emoji: "🇸🇬", name: "Singapore", capital: "Singapore" },
+        { emoji: "🇱🇰", name: "Sri Lanka", capital: "Sri Jayawardenepura Kotte" },
+        { emoji: "🇧🇩", name: "Bangladesh", capital: "Dhaka" }
+    ];
+
+    const flagElement = document.getElementById("flag");
+    const questionTypeElement = document.getElementById("question-type");
+    const optionsElement = document.getElementById("options");
+    const resultElement = document.getElementById("result");
+
+    let isCountryQuestion = true;
+    let currentCountry = null;
+
+    function shuffleArray(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function generateQuestion() {
+        resultElement.textContent = "";
+        currentCountry = countries[Math.floor(Math.random() * countries.length)];
+
+        if (isCountryQuestion) {
+            questionTypeElement.textContent = "What is the name of this country?";
+            generateOptions(currentCountry.name, "name");
+        } else {
+            questionTypeElement.textContent = `What is the capital of ${currentCountry.name}?`;
+            generateOptions(currentCountry.capital, "capital");
+        }
+
+        flagElement.textContent = currentCountry.emoji;
+    }
+
+    function generateOptions(correctAnswer, key) {
+        const options = [correctAnswer];
+        while (options.length < 4) {
+            const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+            const option = key === "name" ? randomCountry.name : randomCountry.capital;
+            if (!options.includes(option)) {
+                options.push(option);
+            }
+        }
+
+        const shuffledOptions = shuffleArray(options);
+        optionsElement.innerHTML = "";
+        shuffledOptions.forEach(option => {
+            const button = document.createElement("button");
+            button.textContent = option;
+            button.className = "btn btn-primary btn-options";
+            button.addEventListener("click", () => checkAnswer(option, correctAnswer));
+            optionsElement.appendChild(button);
+        });
+    }
+
+    function checkAnswer(selected, correct) {
+        if (selected === correct) {
+            resultElement.textContent = "✅ Correct!";
+            resultElement.style.color = "green";
+        } else {
+            resultElement.textContent = `❌ Wrong! Correct answer: ${correct}`;
+            resultElement.style.color = "red";
+        }
+
+        isCountryQuestion = !isCountryQuestion;
+        setTimeout(generateQuestion, 2000);
+    }
+
+    generateQuestion();
+</script>
+
+</body>
+</html>

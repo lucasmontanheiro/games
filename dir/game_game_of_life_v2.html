@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game of Life Board Game</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+      max-width: 100%;
+    }
+
+    .cell {
+      width: 100%;
+      height: 50px;
+      border: 2px solid #333;
+      text-align: center;
+      line-height: 50px;
+      font-size: 12px;
+      font-weight: bold;
+      background-color: #f8d7da;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cell.path {
+      background-color: #d4edda;
+    }
+
+    .player {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+    }
+
+    .player-1 {
+      background-color: red;
+    }
+
+    .player-2 {
+      background-color: blue;
+    }
+
+    .status {
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    .log {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 10px;
+    }
+
+    .scorecard {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px auto;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 10px;
+    }
+
+    .score {
+      padding: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .event-image {
+      width: 50px;
+      height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container text-center">
+    <h1>Game of Life Board Game</h1>
+
+    <!-- Scorecard -->
+    <div id="scorecard" class="scorecard"></div>
+
+    <!-- Status and Dice -->
+    <div class="status">
+      <h4>Current Player: <span id="currentPlayer">Player 1</span></h4>
+      <button id="rollDice" class="btn btn-primary mt-2">Roll Dice</button>
+      <p class="mt-3">Dice Result: <span id="diceResult">-</span></p>
+    </div>
+
+    <!-- Game Log -->
+    <div class="log mt-3">
+      <h5>Game Log</h5>
+      <ul id="gameLog" class="list-unstyled"></ul>
+    </div>
+
+    <!-- Game Board -->
+    <div class="board" id="board"></div>
+
+    <!-- Reset Button -->
+    <div class="controls mt-4">
+      <button id="resetGame" class="btn btn-warning">Reset Game</button>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const boardSize = 10; // Number of cells per side
+    const totalCells = boardSize * boardSize;
+
+    // Players
+    let players = [
+      { id: 1, position: 0, points: 0, color: "player-1" },
+      { id: 2, position: 0, points: 0, color: "player-2" }
+    ];
+    let currentPlayerIndex = 0;
+
+    // Special Events
+    const events = {
+      5: { message: "You found a treasure! Gain 10 points.", points: 10, image: "https://www.wikihow.com/images/thumb/8/8c/Set-up-and-Play-the-Game-of-Life-Step-1-Version-2.jpg/v4-728px-Set-up-and-Play-the-Game-of-Life-Step-1-Version-2.jpg" },
+      12: { message: "You went to a party! Gain 5 points.", points: 5 },
+      18: { message: "You got caught speeding. Lose 5 points.", points: -5 },
+      25: { message: "You went to jail. Lose 1 point.", points: -1, image: "https://via.placeholder.com/50?text=Jail" },
+      40: { message: "You helped a friend! Gain 8 points.", points: 8, image: "https://www.wikihow.com/images/thumb/8/8c/Set-up-and-Play-the-Game-of-Life-Step-1-Version-2.jpg/v4-728px-Set-up-and-Play-the-Game-of-Life-Step-1-Version-2.jpg" }
+    };
+
+    // DOM Elements
+    const board = document.getElementById("board");
+    const diceResult = document.getElementById("diceResult");
+    const currentPlayerDisplay = document.getElementById("currentPlayer");
+    const gameLog = document.getElementById("gameLog");
+    const scorecard = document.getElementById("scorecard");
+
+    // Initialize the board
+    function createBoard() {
+      board.innerHTML = "";
+      for (let i = 0; i < totalCells; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        if (i % 2 === 0) {
+          cell.classList.add("path");
+        }
+        cell.setAttribute("data-cell", i);
+        cell.textContent = i + 1;
+
+        // Add tooltip for special events
+        if (events[i]) {
+          cell.setAttribute("data-bs-toggle", "tooltip");
+          cell.setAttribute("data-bs-placement", "top");
+          cell.setAttribute("title", events[i].message);
+        }
+        board.appendChild(cell);
+      }
+      // Initialize tooltips
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.map((tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl));
+    }
+
+    // Update Scorecard
+    function updateScorecard() {
+      scorecard.innerHTML = "";
+      players.forEach((player) => {
+        const scoreDiv = document.createElement("div");
+        scoreDiv.classList.add("score");
+        scoreDiv.innerHTML = `<span style="color: ${player.color.replace('player-', '')};">Player ${player.id}</span>: ${player.points} Points`;
+        scorecard.appendChild(scoreDiv);
+      });
+    }
+
+    // Place players on the board
+    function placePlayers() {
+      document.querySelectorAll(".player").forEach((p) => p.remove());
+      players.forEach((player) => {
+        const playerDiv = document.createElement("div");
+        playerDiv.classList.add("player", player.color);
+        const cell = document.querySelector(`.cell[data-cell="${player.position}"]`);
+        if (cell) cell.appendChild(playerDiv);
+      });
+    }
+
+    // Roll Dice
+    document.getElementById("rollDice").addEventListener("click", () => {
+      const roll = Math.floor(Math.random() * 6) + 1; // Dice roll: 1-6
+      diceResult.textContent = roll;
+
+      const player = players[currentPlayerIndex];
+      player.position += roll;
+
+      if (player.position >= totalCells - 1) {
+        player.position = totalCells - 1;
+        logMessage(`Player ${player.id} has won the game! 🎉`);
+        document.getElementById("rollDice").disabled = true;
+        updateScorecard();
+        return;
+      }
+
+      // Check for events
+      if (events[player.position]) {
+        const event = events[player.position];
+        logMessage(`Player ${player.id} landed on cell ${player.position + 1}: ${event.message}`);
+        player.points += event.points;
+        if (event.image) {
+          logMessage(`Event image: <img src="${event.image}" class="event-image" alt="Event Image">`);
+        }
+      } else {
+        logMessage(`Player ${player.id} moved to cell ${player.position + 1}.`);
+      }
+
+      // Update for the next player
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      currentPlayerDisplay.textContent = `Player ${players[currentPlayerIndex].id}`;
+      placePlayers();
+      updateScorecard();
+    });
+
+    // Reset Game
+    document.getElementById("resetGame").addEventListener("click", () => {
+      players = players.map((player) => ({ ...player, position: 0, points: 0 }));
+      currentPlayerIndex = 0;
+      currentPlayerDisplay.textContent = "Player 1";
+      diceResult.textContent = "-";
+      document.getElementById("rollDice").disabled = false;
+      gameLog.innerHTML = "";
+      createBoard();
+      placePlayers();
+      updateScorecard();
+    });
+
+    // Log messages
+    function logMessage(message) {
+      const li = document.createElement("li");
+      li.innerHTML = message;
+      gameLog.appendChild(li);
+      gameLog.scrollTop = gameLog.scrollHeight; // Auto-scroll to bottom
+    }
+
+    // Initialize Game
+    createBoard();
+    placePlayers();
+    updateScorecard();
+  </script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sliding Block Game</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* General styling */
+    body {
+      background-color: #f8f9fa;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .game-container {
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 5px;
+    }
+    .tile {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      background-color: #6c757d;
+      color: white;
+      height: 100px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tile.empty {
+      background-color: #f8f9fa;
+      cursor: default;
+    }
+    .tile.movable {
+      background-color: #5cb85c;
+    }
+    @media (max-width: 768px) {
+      .tile {
+        height: 70px;
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container game-container">
+    <h1 class="text-center">Sliding Block Game</h1>
+    <div id="grid" class="grid">
+      <!-- Tiles will be generated dynamically -->
+    </div>
+    <div class="text-center mt-3">
+      <p id="message" class="fw-bold text-success"></p>
+      <button id="shuffle-button" class="btn btn-primary">Shuffle</button>
+      <p id="timer" class="mt-3"></p>
+    </div>
+  </div>
+
+  <script>
+    // Game variables
+    const grid = document.getElementById("grid");
+    const message = document.getElementById("message");
+    const shuffleButton = document.getElementById("shuffle-button");
+    const timerElement = document.getElementById("timer");
+    let tiles = []; // Array to represent the grid
+    let emptyIndex = 15; // Index of the empty space
+    let startTime;
+    let timerInterval;
+
+    // Initialize the game
+    function initializeGame() {
+      tiles = Array.from({ length: 16 }, (_, i) => (i < 15 ? i + 1 : null)); // Numbers 1-15, plus one null
+      shuffleTiles();
+      renderGrid();
+      startTimer();
+    }
+
+    // Shuffle tiles to create a solvable puzzle
+    function shuffleTiles() {
+      do {
+        tiles.sort(() => Math.random() - 0.5); // Randomize tiles
+        emptyIndex = tiles.indexOf(null); // Find the empty space
+      } while (!isSolvable(tiles)); // Ensure the puzzle is solvable
+    }
+
+    // Check if the puzzle is solvable
+    function isSolvable(arr) {
+      let inversions = 0;
+      const flatArray = arr.filter(num => num !== null);
+      for (let i = 0; i < flatArray.length - 1; i++) {
+        for (let j = i + 1; j < flatArray.length; j++) {
+          if (flatArray[i] > flatArray[j]) inversions++;
+        }
+      }
+      const emptyRow = Math.floor(emptyIndex / 4);
+      return (inversions + emptyRow) % 2 === 0;
+    }
+
+    // Render the grid
+    function renderGrid() {
+      grid.innerHTML = ""; // Clear the grid
+      tiles.forEach((value, index) => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        if (value === null) {
+          tile.classList.add("empty");
+        } else {
+          tile.textContent = value;
+          if (isMovable(index)) {
+            tile.classList.add("movable");
+            tile.addEventListener("click", () => moveTile(index));
+          }
+        }
+        grid.appendChild(tile);
+      });
+      checkWinCondition();
+    }
+
+    // Check if a tile is movable
+    function isMovable(index) {
+      const row = Math.floor(index / 4);
+      const col = index % 4;
+      const emptyRow = Math.floor(emptyIndex / 4);
+      const emptyCol = emptyIndex % 4;
+      return (row === emptyRow && Math.abs(col - emptyCol) === 1) || 
+             (col === emptyCol && Math.abs(row - emptyRow) === 1);
+    }
+
+    // Move a tile
+    function moveTile(index) {
+      tiles[emptyIndex] = tiles[index]; // Move tile to empty space
+      tiles[index] = null; // Set the previous tile position to empty
+      emptyIndex = index; // Update the empty index
+      renderGrid();
+    }
+
+    // Check if the player has won
+    function checkWinCondition() {
+      const isWon = tiles.every((value, index) => value === (index < 15 ? index + 1 : null));
+      if (isWon) {
+        clearInterval(timerInterval); // Stop the timer
+        message.textContent = "You Win! 🎉";
+        grid.querySelectorAll(".tile").forEach(tile => tile.classList.remove("movable"));
+      } else {
+        message.textContent = "";
+      }
+    }
+
+    // Start the timer
+    function startTimer() {
+      startTime = Date.now();
+      clearInterval(timerInterval); // Clear any previous timer
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        timerElement.textContent = `Time: ${elapsed} seconds`;
+      }, 1000);
+    }
+
+    // Shuffle button click event
+    shuffleButton.addEventListener("click", () => {
+      shuffleTiles();
+      renderGrid();
+      startTimer();
+    });
+
+    // Initialize the game on page load
+    initializeGame();
+  </script>
+</body>
+</html>

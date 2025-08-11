@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle Tap Game</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
+    <style>
+        /* General styling for the body */
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        /* Styling for the game circles */
+        .circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        /* Player circles on each side */
+        #player1, #player2 {
+            background-color: #0d6efd;
+            color: white;
+        }
+        /* Center circle */
+        #control {
+            background-color: #ffc107;
+            color: black;
+        }
+        /* Disable pointer events for inactive state */
+        .disabled {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h1>Circle Tap Game</h1>
+        <p>When the center circle blinks, tap your side to win the round!</p>
+        <div class="row align-items-center">
+            <!-- Player 1 Circle -->
+            <div class="col-3">
+                <div id="player1" class="circle">P1</div>
+            </div>
+            <!-- Control Circle -->
+            <div class="col-6">
+                <div id="control" class="circle">Wait</div>
+            </div>
+            <!-- Player 2 Circle -->
+            <div class="col-3">
+                <div id="player2" class="circle">P2</div>
+            </div>
+        </div>
+        <!-- Scoreboard -->
+        <div class="mt-4">
+            <h2>Score</h2>
+            <p>Player 1: <span id="score1">0</span> | Player 2: <span id="score2">0</span></p>
+            <h3 id="result"></h3>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // References to game elements
+        const player1 = document.getElementById('player1');
+        const player2 = document.getElementById('player2');
+        const control = document.getElementById('control');
+        const score1Display = document.getElementById('score1');
+        const score2Display = document.getElementById('score2');
+        const resultDisplay = document.getElementById('result');
+
+        // Game variables
+        let score1 = 0, score2 = 0, rounds = 0;
+        let isActive = false; // Tracks if the control circle is "active"
+        const maxRounds = 5;
+
+        // Function to start a new round
+        function startRound() {
+            resultDisplay.textContent = ""; // Clear previous result
+            control.textContent = "Wait";
+            control.classList.add('disabled'); // Disable interaction
+            isActive = false;
+
+            // Random delay before blinking
+            const delay = Math.random() * 2000 + 1000; // Between 1-3 seconds
+            setTimeout(() => {
+                control.textContent = "Tap!";
+                control.classList.remove('disabled'); // Enable interaction
+                isActive = true;
+            }, delay);
+        }
+
+        // Function to handle player taps
+        function playerTap(player) {
+            if (!isActive) return; // Ignore taps if not active
+
+            // Determine the winner
+            if (player === 'player1') {
+                score1++;
+                score1Display.textContent = score1;
+                resultDisplay.textContent = "Player 1 wins this round!";
+            } else if (player === 'player2') {
+                score2++;
+                score2Display.textContent = score2;
+                resultDisplay.textContent = "Player 2 wins this round!";
+            }
+
+            // End round
+            isActive = false;
+            rounds++;
+
+            // Check if game over
+            if (rounds >= maxRounds) {
+                control.textContent = "Game Over";
+                control.classList.add('disabled'); // Disable further interaction
+                declareWinner();
+            } else {
+                setTimeout(startRound, 2000); // Start new round after a delay
+            }
+        }
+
+        // Function to declare the winner
+        function declareWinner() {
+            if (score1 > score2) {
+                resultDisplay.textContent = "Player 1 is the overall winner!";
+            } else if (score2 > score1) {
+                resultDisplay.textContent = "Player 2 is the overall winner!";
+            } else {
+                resultDisplay.textContent = "It's a tie!";
+            }
+        }
+
+        // Event listeners for player circles
+        player1.addEventListener('click', () => playerTap('player1'));
+        player2.addEventListener('click', () => playerTap('player2'));
+
+        // Start the first round
+        startRound();
+    </script>
+</body>
+</html>
